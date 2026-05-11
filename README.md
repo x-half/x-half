@@ -1,16 +1,29 @@
 ## Hi there 👋
 
-<!--
-**x-half/x-half** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+```
+██╗  ██╗ █████╗ ██╗     ███████╗
+██║  ██║██╔══██╗██║     ██╔════╝
+███████║███████║██║     █████╗
+██╔══██║██╔══██║██║     ██╔══╝
+██║  ██║██║  ██║███████╗██║
+╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  · half
+```
 
-Here are some ideas to get you started:
+> 做一半，留一半。/ Build half, leave half.
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+---
+
+**正在做 / Current**
+
+- 🛠 [`halfcopilot`](https://www.npmjs.com/package/halfcopilot) — 终端 AI 编程助手，支持 Skills、MCP、多平台
+- 🌐 [`tyche.love`](https://tyche.love)
+
+---
+
+**技术栈 / Stack**
+
+`TypeScript` `Node.js` `React` `Turborepo` `MCP`
+
+---
+
+> *"你永远不知道另一半是什么。"*
