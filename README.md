@@ -15,14 +15,14 @@
 
 **正在做 / Current**
 
-- 🛠 [`halfcopilot`](https://www.npmjs.com/package/halfcopilot) — 终端 AI 编程助手，支持 Skills、MCP、多平台
+- 🛠 [`halfcopilot`](https://github.com/x-half/halfcopilot) — 终端 AI 编程助手，支持 Skills、MCP、多平台
 - 🌐 [`tyche.love`](https://tyche.love)
 
 ---
 
 **技术栈 / Stack**
 
-`TypeScript` `Node.js` `React` `Turborepo` `MCP`
+`TypeScript` `Node.js` `Java` `Turborepo` `MCP`
 
 ---
 
