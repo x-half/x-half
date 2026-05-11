@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 系统设计全景知识文档</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-light: #4a4a4a;
+    --ink-muted: #8a8a8a;
+    --paper: #faf8f4;
+    --paper-alt: #f2ede4;
+    --paper-card: #ffffff;
+    --accent: #c0392b;
+    --accent-dark: #96281b;
+    --accent-light: #fadbd8;
+    --accent2: #2c3e7a;
+    --accent2-light: #dce4f5;
+    --accent3: #1a6b4a;
+    --accent3-light: #d4eddf;
+    --accent4: #7d5a00;
+    --accent4-light: #fef3cd;
+    --border: #d4cbbf;
+    --border-light: #e8e2d8;
+    --code-bg: #2b2b2b;
+    --code-text: #f8f8f2;
+    --shadow: rgba(0,0,0,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.8;
+    font-size: 15px;
+    font-weight: 300;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 50%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(192,57,43,0.12) 20px,
+      rgba(192,57,43,0.12) 21px
+    );
+  }
+  .cover-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .cover-sub {
+    font-size: 16px;
+    color: #aaa;
+    font-weight: 300;
+    margin-bottom: 48px;
+    position: relative;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    border-top: 1px solid #333;
+    padding-top: 24px;
+    font-size: 13px;
+    color: #888;
+    position: relative;
+  }
+  .cover-meta span { color: #bbb; font-weight: 500; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--paper-alt);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 60px;
+  }
+  .toc-title {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 40px;
+  }
+  .toc-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 0;
+    text-decoration: none;
+    color: var(--ink-light);
+    font-size: 14px;
+    border-bottom: 1px dashed var(--border-light);
+    transition: color 0.2s;
+  }
+  .toc-item:hover { color: var(--accent); }
+  .toc-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 24px;
+    font-weight: 500;
+  }
+  .toc-arrow { margin-left: auto; color: var(--border); font-size: 10px; }
+
+  /* ── Layout ── */
+  .content { max-width: 900px; margin: 0 auto; padding: 60px 60px 100px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 72px; }
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    padding-top: 6px;
+    min-width: 30px;
+  }
+  .section-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 36px 0 14px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h3::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--accent2);
+    margin: 24px 0 10px;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+
+  p { margin-bottom: 14px; color: var(--ink-light); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--paper-card);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px 0;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+  .card-title {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    font-weight: 500;
+    margin-bottom: 16px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Grid cards ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .mini-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+  }
+  .mini-card .icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+  .mini-card .label {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .mini-card .desc {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.6;
+  }
+  .mini-card.red { border-top: 3px solid var(--accent); }
+  .mini-card.blue { border-top: 3px solid var(--accent2); }
+  .mini-card.green { border-top: 3px solid var(--accent3); }
+  .mini-card.amber { border-top: 3px solid var(--accent4); }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 2px;
+  }
+  .tag-red { background: var(--accent-light); color: var(--accent-dark); }
+  .tag-blue { background: var(--accent2-light); color: var(--accent2); }
+  .tag-green { background: var(--accent3-light); color: var(--accent3); }
+  .tag-amber { background: var(--accent4-light); color: var(--accent4); }
+  .tag-gray { background: var(--paper-alt); color: var(--ink-muted); border: 1px solid var(--border); }
+
+  /* ── Code ── */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 20px 24px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  pre .comment { color: #75715e; }
+  pre .key { color: #f92672; }
+  pre .str { color: #e6db74; }
+  pre .num { color: #ae81ff; }
+  pre .fn { color: #66d9ef; }
+  pre .type { color: #a6e22e; }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--paper-alt);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent-dark);
+  }
+
+  /* ── Pipeline ── */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 24px 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .pipe-step {
+    flex: 1;
+    min-width: 110px;
+    background: var(--paper-card);
+    border: 1px solid var(--border-light);
+    padding: 14px 12px;
+    text-align: center;
+    position: relative;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .pipe-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 16px;
+    z-index: 2;
+    background: var(--paper);
+    padding: 2px;
+  }
+  .pipe-step:first-child { border-radius: 8px 0 0 8px; }
+  .pipe-step:last-child { border-radius: 0 8px 8px 0; }
+  .pipe-icon { font-size: 18px; margin-bottom: 6px; }
+  .pipe-label { color: var(--ink); }
+  .pipe-sub { color: var(--ink-muted); font-size: 11px; font-weight: 300; margin-top: 4px; }
+
+  /* ── Comparison table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 20px 0;
+  }
+  th {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--ink-light);
+    vertical-align: top;
+  }
+  tr:hover td { background: var(--paper-alt); }
+
+  /* ── Callouts ── */
+  .callout {
+    padding: 16px 20px;
+    border-left: 4px solid;
+    border-radius: 0 6px 6px 0;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .callout-warn { border-color: var(--accent4); background: var(--accent4-light); color: var(--accent4); }
+  .callout-info { border-color: var(--accent2); background: var(--accent2-light); color: var(--accent2); }
+  .callout-tip { border-color: var(--accent3); background: var(--accent3-light); color: var(--accent3); }
+  .callout-danger { border-color: var(--accent); background: var(--accent-light); color: var(--accent-dark); }
+  .callout strong { font-weight: 700; }
+
+  /* ── List ── */
+  ul, ol { padding-left: 24px; margin: 12px 0 16px; }
+  li { margin-bottom: 8px; color: var(--ink-light); }
+  li::marker { color: var(--accent); }
+
+  /* ── Arch diagram ── */
+  .arch {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 12px;
+    padding: 28px;
+    margin: 24px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 2;
+  }
+  .arch .layer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+  }
+  .arch .box {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .arch .box-red { background: var(--accent); }
+  .arch .box-blue { background: var(--accent2); }
+  .arch .box-green { background: var(--accent3); }
+  .arch .box-amber { background: var(--accent4); }
+  .arch .box-gray { background: #555; }
+  .arch .arrow { color: #666; font-size: 11px; }
+  .arch .layer-label { color: #888; font-size: 11px; min-width: 80px; }
+
+  /* ── Divider ── */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 60px 0 0;
+    color: var(--ink-muted);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+
+  /* ── Key-value pairs ── */
+  .kv-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .kv-key {
+    background: var(--paper-alt);
+    padding: 12px 16px;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .kv-val {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--ink-light);
+  }
+  .kv-key:last-of-type, .kv-val:last-of-type { border-bottom: none; }
+
+  /* ── Print ── */
+  @media print {
+    .cover { break-after: page; }
+    .section { break-inside: avoid; }
+  }
+
+  @media (max-width: 700px) {
+    .content { padding: 30px 20px 60px; }
+    .cover { padding: 40px 24px 30px; }
+    .cover h1 { font-size: 28px; }
+    .toc { padding: 30px 24px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    .pipeline { flex-direction: column; }
+    .pipe-step::after { display: none; }
+    .pipe-step { border-radius: 8px; margin: 4px 0; }
+    .kv-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="cover-label">技术知识文档 · 2025</div>
+  <h1>AI Agent<br>系统设计全景</h1>
+  <div class="cover-sub">框架 · 能力 · 执行链路 · 约束 · 上下文工程</div>
+  <div class="cover-meta">
+    <div><span>章节</span> 8 个核心模块</div>
+    <div><span>受众</span> AI 工程师 / 架构师 / 产品经理</div>
+    <div><span>版本</span> v2.0</div>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">目录</div>
+  <div class="toc-grid">
+    <a class="toc-item" href="#s1"><span class="toc-num">01</span>什么是 AI Agent<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s5"><span class="toc-num">05</span>约束与安全护栏<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s2"><span class="toc-num">02</span>核心框架与架构模式<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s6"><span class="toc-num">06</span>上下文工程<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s3"><span class="toc-num">03</span>Agent 能力维度<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s7"><span class="toc-num">07</span>多 Agent 协作<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s4"><span class="toc-num">04</span>执行链路详解<span class="toc-arrow">↓</span></a>
+    <a class="toc-item" href="#s8"><span class="toc-num">08</span>评估与优化<span class="toc-arrow">↓</span></a>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ─────────────────────── S1 ─────────────────────── -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title">什么是 AI Agent</div>
+  </div>
+
+  <p>AI Agent（智能体）是一个能够<strong>感知环境、做出决策、执行动作、并根据反馈持续调整</strong>的自主系统。与传统的单次 LLM 调用不同，Agent 具备跨多步骤的持久目标追踪能力，可以自主分解任务、调用工具、管理状态，并与外部世界交互。</p>
+
+  <div class="card-grid">
+    <div class="mini-card red">
+      <div class="icon">🎯</div>
+      <div class="label">目标导向</div>
+      <div class="desc">持有长期目标，自主规划达成路径</div>
+    </div>
+    <div class="mini-card blue">
+      <div class="icon">🔧</div>
+      <div class="label">工具使用</div>
+      <div class="desc">调用外部 API、数据库、代码执行等</div>
+    </div>
+    <div class="mini-card green">
+      <div class="icon">🔄</div>
+      <div class="label">循环推理</div>
+      <div class="desc">感知→思考→行动→观察的反复迭代</div>
+    </div>
+    <div class="mini-card amber">
+      <div class="icon">💾</div>
+      <div class="label">状态管理</div>
+      <div class="desc">跨会话维持上下文与工作进度</div>
+    </div>
+  </div>
+
+  <h3>Agent vs. 单次推理的本质区别</h3>
+
+  <table>
+    <tr>
+      <th>维度</th>
+      <th>单次 LLM 调用</th>
+      <th>AI Agent</th>
+    </tr>
+    <tr><td><strong>执行步骤</strong></td><td>一次输入→输出</td><td>多轮迭代，动态步骤数</td></tr>
+    <tr><td><strong>外部交互</strong></td><td>无（纯文本生成）</td><td>调用工具、API、数据库</td></tr>
+    <tr><td><strong>状态</strong></td><td>无状态</td><td>有工作记忆、历史轨迹</td></tr>
+    <tr><td><strong>自主性</strong></td><td>被动响应</td><td>主动规划、决策、纠错</td></tr>
+    <tr><td><strong>错误处理</strong></td><td>无法自我修正</td><td>可观察错误并重试</td></tr>
+  </table>
+
+  <div class="callout callout-info">
+    <strong>核心公式：</strong> Agent = LLM（大脑）+ Memory（记忆）+ Tools（手脚）+ Orchestration（调度）
+  </div>
+</div>
+
+<!-- ─────────────────────── S2 ─────────────────────── -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title">核心框架与架构模式</div>
+  </div>
+
+  <h3>ReAct 框架（Reason + Act）</h3>
+  <p>目前最主流的 Agent 范式，交替进行"思考"与"行动"，每个动作后观察结果并决定下一步。</p>
+
+  <pre><span class="comment">// ReAct 循环伪代码</span>
+<span class="key">while</span> <span class="type">not</span> goal_achieved:
+    thought  = LLM(<span class="str">"Thought: 下一步该做什么？"</span>, context)
+    action   = LLM(<span class="str">"Action: 调用哪个工具？参数是什么？"</span>)
+    obs      = execute_tool(action)
+    context += [thought, action, obs]   <span class="comment"># 追加观察到上下文</span></pre>
+
+  <h3>Plan-and-Execute 框架</h3>
+  <p>先由 Planner LLM 生成完整计划，再由 Executor LLM 逐步执行。计划与执行分离，适合复杂长任务。</p>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-icon">🧠</div>
+      <div class="pipe-label">Planner</div>
+      <div class="pipe-sub">生成子任务列表</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">📋</div>
+      <div class="pipe-label">Task Queue</div>
+      <div class="pipe-sub">有序任务队列</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">⚙️</div>
+      <div class="pipe-label">Executor</div>
+      <div class="pipe-sub">逐步执行每项</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">🔍</div>
+      <div class="pipe-label">Re-planner</div>
+      <div class="pipe-sub">失败时重规划</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-icon">✅</div>
+      <div class="pipe-label">完成</div>
+      <div class="pipe-sub">输出最终结果</div>
+    </div>
+  </div>
+
+  <h3>Reflexion 框架</h3>
+  <p>在 ReAct 基础上引入"自我反思"机制：任务失败后，Agent 对自身轨迹进行批评，将经验写入长期记忆，下次遇到类似任务时参考历史教训。</p>
+
+  <h3>主流开源框架对比</h3>
+
+  <table>
+    <tr>
+      <th>框架</th>
+      <th>核心定位</th>
+      <th>架构模式</th>
+      <th>适用场景</th>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">LangChain</span></td>
+      <td>链式调用 + 工具集成</td>
+      <td>链/Agent/RAG</td>
+      <td>通用应用快速开发</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">LangGraph</span></td>
+      <td>有状态图执行</td>
+      <td>DAG/循环图</td>
+      <td>复杂多步工作流</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">AutoGen</span></td>
+      <td>多 Agent 对话</td>
+      <td>对话式协作</td>
+      <td>代码生成、辩论推理</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-amber">CrewAI</span></td>
+      <td>角色化团队</td>
+      <td>分层 + 角色</td>
+      <td>业务流程自动化</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-gray">OpenAI Agents SDK</span></td>
+      <td>原生函数调用</td>
+      <td>单/多 Agent</td>
+      <td>GPT 生态集成</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ─────────────────────── S3 ─────────────────────── -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title">Agent 能力维度</div>
+  </div>
+
+  <h3>感知能力（Perception）</h3>
+  <p>Agent 接受的输入模态正在快速扩展：</p>
+  <div class="card-grid">
+    <div class="mini-card blue"><div class="label">文本 / 代码</div><div class="desc">Prompt、文档、源码、JSON/CSV</div></div>
+    <div class="mini-card blue"><div class="label">图像 / 视频</div><div class="desc">截图识别、图表解析、视频理解</div></div>
+    <div class="mini-card blue"><div class="label">结构化数据</div><div class="desc">数据库查询结果、API 响应</div></div>
+    <div class="mini-card blue"><div class="label">工具返回值</div><div class="desc">函数输出、Shell 结果、错误栈</div></div>
+  </div>
+
+  <h3>记忆系统（Memory）</h3>
+  <div class="kv-grid">
+    <div class="kv-key">📥 In-Context Memory</div>
+    <div class="kv-val">当前 Prompt 窗口内的信息，最直接但受 Token 限制（4K~200K）</div>
+    <div class="kv-key">📚 External Memory</div>
+    <div class="kv-val">向量数据库（Pinecone/Chroma/Weaviate），存储语义化 Embedding，支持检索增强（RAG）</div>
+    <div class="kv-key">🗃️ Episodic Memory</div>
+    <div class="kv-val">历史对话记录、执行轨迹，用于 Reflexion 学习</div>
+    <div class="kv-key">🧠 Semantic Memory</div>
+    <div class="kv-val">知识图谱、实体关系，结构化世界知识</div>
+    <div class="kv-key">⚙️ Procedural Memory</div>
+    <div class="kv-val">微调后的模型权重，隐式编码的能力与偏好</div>
+  </div>
+
+  <h3>行动能力（Action）</h3>
+
+  <h4>工具调用（Function Calling / Tool Use）</h4>
+  <p>现代 LLM 原生支持结构化工具调用，输出 JSON Schema 描述的函数名 + 参数：</p>
+
+  <pre><span class="comment">// OpenAI 工具调用示例</span>
+{
+  <span class="key">"tools"</span>: [{
+    <span class="key">"type"</span>: <span class="str">"function"</span>,
+    <span class="key">"function"</span>: {
+      <span class="key">"name"</span>: <span class="str">"search_web"</span>,
+      <span class="key">"description"</span>: <span class="str">"搜索网页获取最新信息"</span>,
+      <span class="key">"parameters"</span>: {
+        <span class="key">"type"</span>: <span class="str">"object"</span>,
+        <span class="key">"properties"</span>: {
+          <span class="key">"query"</span>: { <span class="key">"type"</span>: <span class="str">"string"</span> },
+          <span class="key">"max_results"</span>: { <span class="key">"type"</span>: <span class="str">"integer"</span>, <span class="key">"default"</span>: <span class="num">5</span> }
+        }
+      }
+    }
+  }]
+}</pre>
+
+  <h4>常见工具类型分类</h4>
+  <table>
+    <tr><th>类别</th><th>示例工具</th><th>说明</th></tr>
+    <tr><td>🔍 信息获取</td><td>web_search, RAG retrieval, SQL query</td><td>获取外部知识</td></tr>
+    <tr><td>💻 代码执行</td><td>Python REPL, Shell, Jupyter</td><td>运行代码、数学计算</td></tr>
+    <tr><td>📁 文件操作</td><td>read_file, write_file, list_dir</td><td>读写本地/云端文件</td></tr>
+    <tr><td>🌐 API 集成</td><td>HTTP call, OAuth, Webhook</td><td>连接第三方服务</td></tr>
+    <tr><td>🖥️ 计算机控制</td><td>click, type, screenshot, browser</td><td>GUI 自动化（CUA）</td></tr>
+    <tr><td>👥 Agent 调用</td><td>spawn_agent, handoff</td><td>调用子 Agent</td></tr>
+  </table>
+
+  <div class="callout callout-warn">
+    <strong>设计原则：</strong>工具描述的质量直接影响 Agent 的调用准确率。应包含：功能说明、参数含义、使用场景、输出格式、副作用提示（如"此操作不可逆"）。
+  </div>
+</div>
+
+<!-- ─────────────────────── S4 ─────────────────────── -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title">执行链路详解</div>
+  </div>
+
+  <h3>完整执行流程</h3>
+
+  <div class="arch">
+    <div class="layer">
+      <span class="layer-label">用户输入</span>
+      <span class="box box-gray">User Query</span>
+      <span class="arrow">→ 预处理（意图识别、安全过滤）</span>
+    </div>
+    <div class="layer">
+      <span class="layer-label">上下文构建</span>
+      <span class="box box-blue">System Prompt</span>
+      <span class="arrow">+</span>
+      <span class="box box-blue">Memory Retrieval</span>
+      <span class="arrow">+</span>
+      <span class="box box-blue">Tool Schemas</span>
+    </div>
+    <div class="layer">
+      <span class="layer-label">推理决策</span>
+      <span class="box box-red">LLM Inference</span>
+      <span class="arrow">→ Thought + Action / Final Answer</span>
+    </div>
+    <div class="layer">
+      <span class="layer-label">工具执行</span>
+      <span class="box box-green">Tool Dispatcher</span>
+      <span class="arrow">→ Tool Result (Observation)</span>
+    </div>
+    <div class="layer">
+      <span class="layer-label">循环/终止</span>
+      <span class="box box-amber">Loop Controller</span>
+      <span class="arrow">→ 继续迭代 or 返回最终结果</span>
+    </div>
+  </div>
+
+  <h3>Token 流详解：一次完整的 ReAct 轮次</h3>
+
+  <pre><span class="comment">## System Prompt（角色 + 工具说明）</span>
+你是一个研究助手，可以使用以下工具：
+- search_web(query): 搜索网页
+- python_repl(code): 执行Python代码
+
+<span class="comment">## User Message</span>
+分析2024年全球AI芯片市场规模，并画出前三名厂商份额饼图
+
+<span class="comment">## Assistant Turn 1（思考 + 行动）</span>
+Thought: 需要先获取市场数据，再用Python绘图
+Action: search_web
+Action Input: {"query": "2024全球AI芯片市场份额排名"}
+
+<span class="comment">## Tool Result（工具返回）</span>
+Observation: NVIDIA 80%, AMD 8%, Intel 5%...
+
+<span class="comment">## Assistant Turn 2（继续推理）</span>
+Thought: 数据已获取，现在用matplotlib绘图
+Action: python_repl
+Action Input: {"code": "import matplotlib..."}
+
+<span class="comment">## Tool Result</span>
+Observation: [图像已生成，路径：/tmp/chart.png]
+
+<span class="comment">## Assistant Final</span>
+Final Answer: 以下是2024年AI芯片市场分析...</pre>
+
+  <h3>终止条件设计</h3>
+
+  <div class="card">
+    <div class="card-title">Loop Controller 决策树</div>
+    <table>
+      <tr><th>条件</th><th>触发动作</th></tr>
+      <tr><td>LLM 输出 <code>Final Answer:</code> 标记</td><td>✅ 正常终止，返回结果</td></tr>
+      <tr><td>达到最大步骤数（如 max_steps=15）</td><td>⚠️ 强制终止，返回当前最优答案</td></tr>
+      <tr><td>工具调用连续失败 N 次</td><td>❌ 错误终止，上报异常</td></tr>
+      <tr><td>检测到循环模式（同一动作重复）</td><td>🔁 打破循环，注入提示</td></tr>
+      <tr><td>Token 预算耗尽</td><td>💰 成本终止，返回部分结果</td></tr>
+    </table>
+  </div>
+
+  <h3>并行工具调用（Parallel Tool Calls）</h3>
+  <p>现代框架支持在单个推理步骤中批量发起多个工具调用，显著减少串行等待时间：</p>
+
+  <pre><span class="comment">// 并行调用示例（OpenAI API）</span>
+[
+  { <span class="key">"id"</span>: <span class="str">"call_1"</span>, <span class="key">"function"</span>: { <span class="key">"name"</span>: <span class="str">"search_web"</span>, <span class="key">"arguments"</span>: {<span class="str">"query"</span>: <span class="str">"A"</span>} } },
+  { <span class="key">"id"</span>: <span class="str">"call_2"</span>, <span class="key">"function"</span>: { <span class="key">"name"</span>: <span class="str">"search_web"</span>, <span class="key">"arguments"</span>: {<span class="str">"query"</span>: <span class="str">"B"</span>} } },
+  { <span class="key">"id"</span>: <span class="str">"call_3"</span>, <span class="key">"function"</span>: { <span class="key">"name"</span>: <span class="str">"read_file"</span>, <span class="key">"arguments"</span>: {<span class="str">"path"</span>: <span class="str">"/data.csv"</span>} } }
+]
+<span class="comment">// 三个工具并行执行，延迟 = max(t1,t2,t3) 而非 t1+t2+t3</span></pre>
+</div>
+
+<!-- ─────────────────────── S5 ─────────────────────── -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title">约束与安全护栏</div>
+  </div>
+
+  <p>Agent 的自主性越强，安全风险越大。约束系统是 Agent 工程中最不可忽视的组件，涵盖多个层级。</p>
+
+  <h3>约束层级模型</h3>
+
+  <div class="kv-grid">
+    <div class="kv-key">L1 模型层</div>
+    <div class="kv-val">RLHF/Constitutional AI 训练的内置价值观，拒绝有害输出的能力</div>
+    <div class="kv-key">L2 Prompt 层</div>
+    <div class="kv-val">System Prompt 中明确的行为规则，如"不得删除用户数据"、"操作前必须确认"</div>
+    <div class="kv-key">L3 工具权限层</div>
+    <div class="kv-val">工具白名单/黑名单，只暴露允许的 API，最小权限原则</div>
+    <div class="kv-key">L4 输出过滤层</div>
+    <div class="kv-val">Guardrails 模型对 Agent 输出实时检测，PII 检测、有害内容过滤</div>
+    <div class="kv-key">L5 人工审批层</div>
+    <div class="kv-val">Human-in-the-loop，高风险操作（如删除、支付）需人工确认</div>
+    <div class="kv-key">L6 可观测层</div>
+    <div class="kv-val">全链路日志记录、异常告警、执行轨迹审计</div>
+  </div>
+
+  <h3>常见风险与对策</h3>
+
+  <table>
+    <tr><th>风险类型</th><th>描述</th><th>防御措施</th></tr>
+    <tr>
+      <td><span class="tag tag-red">提示注入</span></td>
+      <td>工具返回值中包含恶意指令，操控 Agent 行为</td>
+      <td>工具输出隔离、输入沙箱、输出解析严格化</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">权限越界</span></td>
+      <td>Agent 访问了不应访问的资源</td>
+      <td>最小权限原则、OAuth scope 限制</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-amber">无限循环</span></td>
+      <td>Agent 陷入死循环，持续消耗资源</td>
+      <td>最大步骤数、重复检测、超时熔断</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-amber">幻觉操作</span></td>
+      <td>对不存在的工具或参数发起调用</td>
+      <td>工具调用格式校验、Schema 严格检查</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-gray">费用失控</span></td>
+      <td>Token/API 调用超出预期成本</td>
+      <td>Token 预算、成本告警、每轮限速</td>
+    </tr>
+  </table>
+
+  <h3>Guardrails 设计模式</h3>
+
+  <pre><span class="comment"># 输入/输出双向守护（伪代码）</span>
+<span class="key">class</span> <span class="type">AgentGuardrails</span>:
+    <span class="key">def</span> <span class="fn">validate_input</span>(self, user_message):
+        <span class="comment"># 1. PII 检测（电话/邮件/身份证）</span>
+        <span class="comment"># 2. 有害意图分类</span>
+        <span class="comment"># 3. 越权请求识别</span>
+        <span class="key">return</span> safe_message
+
+    <span class="key">def</span> <span class="fn">validate_tool_call</span>(self, tool_name, args):
+        <span class="comment"># 1. 工具白名单检查</span>
+        <span class="comment"># 2. 危险参数检测（../路径穿越、DROP TABLE 等）</span>
+        <span class="comment"># 3. 操作幂等性评估</span>
+        <span class="key">return</span> approved
+
+    <span class="key">def</span> <span class="fn">validate_output</span>(self, response):
+        <span class="comment"># 1. 不应泄露的内部信息过滤</span>
+        <span class="comment"># 2. 有害内容过滤</span>
+        <span class="comment"># 3. 格式合规检查</span>
+        <span class="key">return</span> safe_response</pre>
+
+  <div class="callout callout-danger">
+    <strong>原则：不可逆操作必须人工确认。</strong>删除、支付、发送邮件等副作用操作，设计上应默认 Human-in-the-loop，而非默认自动执行。
+  </div>
+</div>
+
+<!-- ─────────────────────── S6 ─────────────────────── -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title">上下文工程（Context Engineering）</div>
+  </div>
+
+  <p>上下文工程是 Agent 工程中最核心的技术领域——决定在每次 LLM 调用时，窗口里<strong>放什么、怎么放、放多少</strong>，直接决定 Agent 的推理质量与稳定性。</p>
+
+  <h3>上下文的组成结构</h3>
+
+  <pre><span class="comment">┌─────────────────────────────────────────┐</span>
+<span class="comment">│           LLM Context Window             │</span>
+<span class="comment">├──────────────┬──────────────────────────┤</span>
+<span class="key">│ System Prompt│</span> 角色/能力/规则/工具说明  <span class="key">│</span>
+<span class="comment">├──────────────┼──────────────────────────┤</span>
+<span class="key">│  Retrieved   │</span> RAG 检索结果 / 相关文档  <span class="key">│</span>
+<span class="key">│  Knowledge   │</span> 知识库 / Few-shot 示例   <span class="key">│</span>
+<span class="comment">├──────────────┼──────────────────────────┤</span>
+<span class="key">│  Trajectory  │</span> 历史 Thought/Action/Obs  <span class="key">│</span>
+<span class="comment">├──────────────┼──────────────────────────┤</span>
+<span class="key">│  User Input  │</span> 当前用户消息             <span class="key">│</span>
+<span class="comment">└──────────────┴──────────────────────────┘</span></pre>
+
+  <h3>System Prompt 工程</h3>
+  <p>System Prompt 是 Agent 的"宪法"，需要涵盖以下模块：</p>
+
+  <div class="card">
+    <div class="card-title">System Prompt 标准结构</div>
+    <ol>
+      <li><strong>角色与身份</strong>：明确 Agent 是谁、专长是什么</li>
+      <li><strong>任务范围</strong>：能做什么、明确不能做什么</li>
+      <li><strong>工具说明</strong>：每个工具的用途、参数、使用时机</li>
+      <li><strong>输出格式</strong>：响应的结构要求（如 JSON、Markdown）</li>
+      <li><strong>推理规范</strong>：Thought 格式、Chain-of-Thought 要求</li>
+      <li><strong>边界规则</strong>：不确定时如何处理，错误时如何上报</li>
+      <li><strong>示例（Few-shot）</strong>：高质量的输入→输出样例</li>
+    </ol>
+  </div>
+
+  <h3>上下文压缩策略</h3>
+  <p>当执行轨迹过长时，需要对历史上下文进行压缩，以节省 Token 并保持关键信息：</p>
+
+  <table>
+    <tr><th>策略</th><th>方法</th><th>适用场景</th></tr>
+    <tr>
+      <td><span class="tag tag-blue">摘要压缩</span></td>
+      <td>用 LLM 对早期轨迹生成摘要</td>
+      <td>长会话、多轮任务</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">滑动窗口</span></td>
+      <td>只保留最近 N 轮，丢弃早期</td>
+      <td>任务有明确局部性</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">重要性过滤</span></td>
+      <td>保留包含关键事实的步骤</td>
+      <td>高密度信息任务</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-blue">向量外置</span></td>
+      <td>将历史存入向量 DB，按需检索</td>
+      <td>超长会话、跨会话记忆</td>
+    </tr>
+  </table>
+
+  <h3>RAG（检索增强生成）设计</h3>
+
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-icon">📝</div><div class="pipe-label">文档分块</div><div class="pipe-sub">Chunking 策略</div></div>
+    <div class="pipe-step"><div class="pipe-icon">🔢</div><div class="pipe-label">向量化</div><div class="pipe-sub">Embedding 模型</div></div>
+    <div class="pipe-step"><div class="pipe-icon">🗄️</div><div class="pipe-label">索引存储</div><div class="pipe-sub">Vector DB</div></div>
+    <div class="pipe-step"><div class="pipe-icon">🔍</div><div class="pipe-label">语义检索</div><div class="pipe-sub">Top-K 召回</div></div>
+    <div class="pipe-step"><div class="pipe-icon">🔗</div><div class="pipe-label">注入上下文</div><div class="pipe-sub">上下文拼装</div></div>
+    <div class="pipe-step"><div class="pipe-icon">🧠</div><div class="pipe-label">LLM 生成</div><div class="pipe-sub">基于知识回答</div></div>
+  </div>
+
+  <h3>上下文工程最佳实践</h3>
+
+  <div class="card-grid">
+    <div class="mini-card green">
+      <div class="label">信息密度优先</div>
+      <div class="desc">每个 Token 都应有意义，删除冗余的客套话和重复说明</div>
+    </div>
+    <div class="mini-card green">
+      <div class="label">关键信息置顶/置底</div>
+      <div class="desc">LLM 对首尾 Token 注意力更强，将规则和目标放在两端</div>
+    </div>
+    <div class="mini-card green">
+      <div class="label">结构化标记</div>
+      <div class="desc">用 XML/Markdown 分隔不同部分，帮助模型区分角色</div>
+    </div>
+    <div class="mini-card green">
+      <div class="label">动态注入</div>
+      <div class="desc">按任务阶段动态调整工具列表和 Few-shot 示例</div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <strong>Lost in the Middle 问题：</strong>研究表明 LLM 对上下文中间部分的信息召回率显著低于首尾。关键的工具描述、规则和约束应放在 System Prompt 开头或用户消息末尾，而非埋在中间大段文本中。
+  </div>
+</div>
+
+<!-- ─────────────────────── S7 ─────────────────────── -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title">多 Agent 协作架构</div>
+  </div>
+
+  <h3>协作模式</h3>
+
+  <div class="card-grid">
+    <div class="mini-card red">
+      <div class="label">主从模式（Orchestrator-Worker）</div>
+      <div class="desc">Orchestrator 拆解任务，多个 Worker Agent 并行执行，结果汇总</div>
+    </div>
+    <div class="mini-card blue">
+      <div class="label">辩论模式（Debate）</div>
+      <div class="desc">多个 Agent 对同一问题给出不同视角，互相批评并迭代收敛</div>
+    </div>
+    <div class="mini-card green">
+      <div class="label">流水线模式（Pipeline）</div>
+      <div class="desc">专业化 Agent 按序传递上下文，每个负责独立的处理阶段</div>
+    </div>
+    <div class="mini-card amber">
+      <div class="label">群体模式（Swarm）</div>
+      <div class="desc">多 Agent 共享全局状态，动态 handoff，无中心协调</div>
+    </div>
+  </div>
+
+  <h3>Agent 间通信协议</h3>
+
+  <pre><span class="comment">// Agent Handoff 消息格式（Swarm 风格）</span>
+{
+  <span class="key">"from_agent"</span>: <span class="str">"ResearchAgent"</span>,
+  <span class="key">"to_agent"</span>: <span class="str">"WriterAgent"</span>,
+  <span class="key">"handoff_reason"</span>: <span class="str">"研究阶段完成，需要生成报告"</span>,
+  <span class="key">"context"</span>: {
+    <span class="key">"task"</span>: <span class="str">"撰写 Q4 市场分析报告"</span>,
+    <span class="key">"findings"</span>: [...],      <span class="comment">// 传递研究结果</span>
+    <span class="key">"constraints"</span>: {...},   <span class="comment">// 传递约束条件</span>
+    <span class="key">"history_summary"</span>: <span class="str">"..."</span> <span class="comment">// 压缩的历史摘要</span>
+  }
+}</pre>
+
+  <h3>多 Agent 挑战</h3>
+
+  <table>
+    <tr><th>挑战</th><th>具体问题</th><th>解决方案</th></tr>
+    <tr>
+      <td>状态一致性</td>
+      <td>多 Agent 修改共享资源产生冲突</td>
+      <td>乐观锁、事件溯源、共享黑板架构</td>
+    </tr>
+    <tr>
+      <td>错误传播</td>
+      <td>上游 Agent 错误被下游放大</td>
+      <td>每个 Agent 独立校验输入，设置检查点</td>
+    </tr>
+    <tr>
+      <td>成本叠加</td>
+      <td>N 个 Agent 的 Token 成本线性叠加</td>
+      <td>小模型 Worker + 大模型 Orchestrator 组合</td>
+    </tr>
+    <tr>
+      <td>死锁</td>
+      <td>Agent A 等 B，B 等 A</td>
+      <td>超时机制、依赖图检测</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ─────────────────────── S8 ─────────────────────── -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-title">评估与优化</div>
+  </div>
+
+  <h3>Agent 评估维度</h3>
+
+  <div class="kv-grid">
+    <div class="kv-key">任务成功率</div>
+    <div class="kv-val">最终输出是否满足用户目标，端到端的正确率</div>
+    <div class="kv-key">工具调用准确率</div>
+    <div class="kv-val">选择的工具和参数是否正确，调用成功率</div>
+    <div class="kv-key">步骤效率</div>
+    <div class="kv-val">达成目标所用的平均步骤数（越少越好）</div>
+    <div class="kv-key">Token 消耗</div>
+    <div class="kv-val">每次任务的输入+输出 Token 总量，成本指标</div>
+    <div class="kv-key">延迟</div>
+    <div class="kv-val">首 Token 时间（TTFT）和总完成时间</div>
+    <div class="kv-key">安全性</div>
+    <div class="kv-val">越权操作率、有害输出比例、注入攻击抵抗率</div>
+  </div>
+
+  <h3>评估框架（LLM-as-Judge）</h3>
+
+  <pre><span class="comment">// 用 LLM 评估 Agent 执行轨迹质量</span>
+<span class="key">const</span> judge_prompt = <span class="str">`
+你是 Agent 行为评估专家，请对以下执行轨迹打分（0-10）：
+
+任务目标: {task}
+执行轨迹: {trajectory}
+
+评估维度：
+1. 推理逻辑性（Thought 步骤是否合理）
+2. 工具选择准确性
+3. 错误处理能力
+4. 最终答案质量
+
+以 JSON 格式输出每个维度的分数和理由。
+`</span></pre>
+
+  <h3>常见优化手段</h3>
+
+  <div class="card-grid">
+    <div class="mini-card red">
+      <div class="label">Prompt 优化</div>
+      <div class="desc">优化 System Prompt、工具描述、Few-shot 示例，是 ROI 最高的手段</div>
+    </div>
+    <div class="mini-card blue">
+      <div class="label">轨迹微调</div>
+      <div class="desc">收集高质量 Thought-Action 轨迹对模型微调，提升工具调用准确率</div>
+    </div>
+    <div class="mini-card green">
+      <div class="label">工具精简</div>
+      <div class="desc">减少无关工具数量，降低 LLM 选择混淆的概率</div>
+    </div>
+    <div class="mini-card amber">
+      <div class="label">模型分层</div>
+      <div class="desc">简单决策用小模型（如 Haiku），复杂推理用大模型（如 Opus）</div>
+    </div>
+  </div>
+
+  <div class="callout callout-info">
+    <strong>黄金法则：</strong>先在小规模测试集上建立评估基准，再迭代优化。没有评估指标的 Agent 优化等同于在黑暗中摸索。
+  </div>
+
+  <div class="divider">End of Document</div>
+</div>
+
+</div>
+
+</body>
+</html>
